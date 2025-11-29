@@ -3,45 +3,32 @@ package com.example.littlelemon
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.littlelemon.ui.theme.LittleLemonTheme
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        val startDestination =
+            if (userIsLoggedIn()) Home.route
+            else Onboarding.route
+
         setContent {
-            LittleLemonTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            MyNavigation(startDestination = startDestination)
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun userIsLoggedIn(): Boolean {
+        val sharedPrefs = getSharedPreferences("user_prefs", MODE_PRIVATE)
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LittleLemonTheme {
-        Greeting("Android")
+        val firstName = sharedPrefs.getString("firstName", "")
+        val lastName = sharedPrefs.getString("lastName", "")
+        val email = sharedPrefs.getString("email", "")
+
+        // If ANY field is missing, user is NOT logged in
+        return !(firstName.isNullOrBlank() ||
+                lastName.isNullOrBlank() ||
+                email.isNullOrBlank())
     }
 }
