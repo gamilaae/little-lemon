@@ -1,36 +1,37 @@
-package com.example.littlelemon
+package com.example.littlelemon.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.littlelemon.application.App
 import kotlinx.coroutines.flow.first
 
-private val Context.dataStore by preferencesDataStore("user_prefs")
+private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-object UserDataStore {
+class DataStoreManager(private val context: Context) {
 
-    private val NAME_KEY = stringPreferencesKey("name")
-    private val EMAIL_KEY = stringPreferencesKey("email")
+    private val nameKey = stringPreferencesKey("name")
+    private val emailKey = stringPreferencesKey("email")
 
+    // Save user data
     suspend fun saveUser(name: String, email: String) {
-        App.context.dataStore.edit { prefs ->
-            prefs[NAME_KEY] = name
-            prefs[EMAIL_KEY] = email
+        context.dataStore.edit { prefs ->
+            prefs[nameKey] = name
+            prefs[emailKey] = email
         }
     }
 
+    // Get user data
+    suspend fun getUser(): Pair<String, String> {
+        val prefs = context.dataStore.data.first()
+        val name = prefs[nameKey] ?: ""
+        val email = prefs[emailKey] ?: ""
+        return Pair(name, email)
+    }
+
+    // Clear user data
     suspend fun clearUser() {
-        App.context.dataStore.edit { prefs ->
+        context.dataStore.edit { prefs ->
             prefs.clear()
         }
-    }
-
-    suspend fun getUser(): Pair<String, String> {
-        val prefs = App.context.dataStore.data.first()
-        val name = prefs[NAME_KEY] ?: ""
-        val email = prefs[EMAIL_KEY] ?: ""
-        return Pair(name, email)
     }
 }

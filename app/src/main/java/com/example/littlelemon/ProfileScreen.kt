@@ -1,80 +1,119 @@
 package com.example.littlelemon
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.example.littlelemon.datastore.DataStoreManager
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.example.littlelemon.data.DataStoreManager
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    navController: NavHostController,
-    dataStore: DataStoreManager
+    navController: NavController? = null,
+    dataStoreManager: DataStoreManager? = null,
+    scope: CoroutineScope? = null
 ) {
-    val scope = rememberCoroutineScope()
+    val Yellow = Color(0xFFF4CE14)
 
-    // Load values from DataStore
-    val firstName by dataStore.userFirstName.collectAsState(initial = "")
-    val lastName by dataStore.userLastName.collectAsState(initial = "")
-    val email by dataStore.userEmail.collectAsState(initial = "")
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(Color.White)
+            .padding(16.dp)
     ) {
-
-        Text(
-            text = "Profile",
-            style = MaterialTheme.typography.headlineMedium
+        // ---------------- LOGO ----------------
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Little Lemon Logo",
+            modifier = Modifier
+                .height(50.dp)
+                .width(200.dp)
+                .align(Alignment.CenterHorizontally)
         )
 
-        // First name
+        Spacer(modifier = Modifier.height(70.dp))
+
+        // ---------------- PERSONAL INFORMATION TITLE ----------------
+        Text(
+            text = "Personal Information",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.Black,
+            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+        )
+
+        // ---------------- INPUT FIELDS ----------------
         OutlinedTextField(
             value = firstName,
-            onValueChange = {},
+            onValueChange = { firstName = it },
             label = { Text("First Name") },
-            enabled = false,
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Last name
+        Spacer(modifier = Modifier.height(18.dp))
+
         OutlinedTextField(
             value = lastName,
-            onValueChange = {},
+            onValueChange = { lastName = it },
             label = { Text("Last Name") },
-            enabled = false,
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Email
+        Spacer(modifier = Modifier.height(18.dp))
+
         OutlinedTextField(
             value = email,
-            onValueChange = {},
+            onValueChange = { email = it },
             label = { Text("Email") },
-            enabled = false,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(100.dp))
 
-        // Log out button
+        // ---------------- SAVE / UPDATE BUTTON ----------------
         Button(
             onClick = {
-                scope.launch {
-                    dataStore.clearUser()
-                    navController.navigate(Onboarding.route) {
-                        popUpTo(Home.route) { inclusive = true }
+                // Save updated profile data
+                if (dataStoreManager != null && scope != null) {
+                    scope.launch {
+                        dataStoreManager.saveUser("$firstName $lastName", email)
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            colors = ButtonDefaults.buttonColors(containerColor = Yellow),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
-            Text("Log out")
+            Text(
+                text = "Log Out",
+                color = Color.Black,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProfileScreenPreview() {
+    ProfileScreen()
 }

@@ -1,34 +1,37 @@
 package com.example.littlelemon.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore by preferencesDataStore("user_prefs")
+private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class UserPreferences(context: Context) {
-    private val dataStore = context.dataStore
+class UserDataStore(private val context: Context) {
 
-    val userName: Flow<String?> = dataStore.data.map { it[PreferencesKeys.NAME] }
-    val userEmail: Flow<String?> = dataStore.data.map { it[PreferencesKeys.EMAIL] }
+    companion object {
+        val NAME_KEY = stringPreferencesKey("name")
+        val EMAIL_KEY = stringPreferencesKey("email")
+    }
+
+    val userFlow: Flow<Pair<String, String>> = context.dataStore.data
+        .map { prefs: Preferences ->
+            val name = prefs[NAME_KEY] ?: ""
+            val email = prefs[EMAIL_KEY] ?: ""
+            Pair(name, email)
+        }
 
     suspend fun saveUser(name: String, email: String) {
-        dataStore.edit { prefs ->
-            prefs[PreferencesKeys.NAME] = name
-            prefs[PreferencesKeys.EMAIL] = email
+        context.dataStore.edit { prefs ->
+            prefs[NAME_KEY] = name
+            prefs[EMAIL_KEY] = email
         }
     }
 
     suspend fun clearUser() {
-        dataStore.edit { prefs ->
-            prefs.clear()
-        }
-    }
-
-    private object PreferencesKeys {
-        val NAME = stringPreferencesKey("user_name")
-        val EMAIL = stringPreferencesKey("user_email")
+        context.dataStore.edit { it.clear() }
     }
 }

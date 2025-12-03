@@ -1,44 +1,42 @@
-package com.example.littlelemon
+package com.example.littlelemon.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.*
-import com.example.littlelemon.data.AppDatabase
-import com.example.littlelemon.data.UserDataStore
-import com.example.littlelemon.repository.MenuRepository
-
-sealed class Screen(val route: String) {
-    object Onboarding : Screen("onboarding")
-    object Home : Screen("home")
-    object Profile : Screen("profile")
-}
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.example.littlelemon.HomeScreen
+import com.example.littlelemon.OnboardingScreen
+import com.example.littlelemon.ProfileScreen
+import com.example.littlelemon.data.DataStoreManager
+import com.example.littlelemon.viewmodel.MenuViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @Composable
-fun AppNavigation(repository: MenuRepository) {
-    val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
-
-        composable(Screen.Onboarding.route) {
-            OnboardingScreen(repository) {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Onboarding.route) { inclusive = true } // remove onboarding from back stack
-                }
-            }
+fun NavigationGraph(
+    navController: NavHostController,
+    menuViewModel: MenuViewModel,
+    dataStoreManager: DataStoreManager,
+    modifier: Modifier = Modifier,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+) {
+    NavHost(
+        navController = navController,
+        startDestination = Destination.ONBOARDING,
+        modifier = modifier
+    ) {
+        composable(Destination.ONBOARDING) {
+            OnboardingScreen(navController, dataStoreManager, scope)
         }
-
-        composable(Screen.Home.route) {
-            HomeScreen(db = AppDatabase.getDatabase(UserDataStore.context)) {
-                navController.navigate(Screen.Profile.route)
-            }
+        composable(Destination.HOME) {
+            HomeScreen(menuViewModel)
         }
-
-        composable(Screen.Profile.route) {
-            ProfileScreen {
-                // logout -> go back to onboarding
-                navController.navigate(Screen.Onboarding.route) {
-                    popUpTo(Screen.Home.route) { inclusive = true }
-                }
-            }
-        }
+        composable(Destination.PROFILE) {
+            ProfileScreen(
+                dataStoreManager = dataStoreManager,
+                scope = scope
+            )        }
     }
 }
